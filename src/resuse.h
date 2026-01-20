@@ -1,5 +1,5 @@
 /* resuse.h - declarations for child process resource use library
-   Copyright (C) 1993-2021 Free Software Foundation, Inc.
+   Copyright (C) 1993-2021, 2026 Free Software Foundation, Inc.
 
    This file is part of GNU Time.
 
@@ -15,13 +15,13 @@
 
    You should have received a copy of the GNU General Public License
    along with GNU Time.  If not, see <http://www.gnu.org/licenses/>.
-*/ 
+*/
 
 #ifndef _RESUSE_H
 #define _RESUSE_H 1
 
 
-/* Convert rusage's microseconds to miliseconds */
+/* Convert rusage's microseconds to milliseconds */
 #define TV_MSEC tv_usec / 1000
 
 
@@ -31,7 +31,8 @@ typedef struct
 {
   int waitstatus;
   struct rusage ru;
-  struct timeval start, elapsed; /* Wallclock time of process.  */
+  struct timespec start_time;
+  struct timespec end_time;
 } RESUSE;
 
 /* Prepare to measure a child process.  */

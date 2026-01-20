@@ -1,5 +1,5 @@
 /* resuse.h - declarations for child process resource use library
-   Copyright (C) 2017-2021 Free Software Foundation, Inc.
+   Copyright (C) 2017-2021, 2026 Free Software Foundation, Inc.
 
    This file is part of GNU Time.
 
@@ -17,7 +17,7 @@
    along with GNU Time.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
+#include <config.h>
 
 #if GETRUSAGE_RETURNS_PAGES
 

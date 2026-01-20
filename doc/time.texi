@@ -13,7 +13,7 @@ and summarizing the system resources they use.
 version @value{VERSION}
 updated @value{UPDATED}
 
-Copyright @copyright{} 1991-2021 Free Software Foundation, Inc.
+Copyright @copyright{} 1991--2021, 2026 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -52,7 +52,7 @@ Texts.  A copy of the license is included in the section entitled
 @node Top
 @top Time
 
-This file documents the the GNU @code{time} command for running programs
+This file documents the GNU @code{time} command for running programs
 and summarizing the system resources they use.
 Version @value{VERSION}, updated @value{UPDATED}
 @end ifnottex
@@ -336,7 +336,7 @@ signal.
 
 @item %Tn
 Numeric signal code @emph{if} the command was terminated by a signal (e.g.,
-the value @samp{9} if the program was terminted by SIGKILL).
+the value @samp{9} if the program was terminated by SIGKILL).
 Empty if the program exited normally (i.e., not terminated by a signal).
 
 @item %Ts
@@ -458,18 +458,18 @@ When the running time of a command is very nearly zero, some values
 (e.g., the percentage of CPU used) may be reported as either zero (which
 is wrong) or a question mark.
 
-Most information shown by @code{time} is derived from the @code{wait3}
-system call.  The numbers are only as good as those returned by
-@code{wait3}.  Many systems do not measure all of the resources that
-@code{time} can report on; those resources are reported as zero.  The
-systems that measure most or all of the resources are based on 4.2 or
-4.3BSD.  Later BSD releases use different memory management code that
-measures fewer resources.
+Most information shown by @code{time} is derived from the
+@code{getrusage} system call.  The numbers are only as good as those
+returned by @code{getrusage}.  Many systems do not measure all of the
+resources that @code{time} can report on; those resources are reported
+as zero.  The systems that measure most or all of the resources are
+based on 4.2 or 4.3BSD.  Later BSD releases use different memory
+management code that measures fewer resources.
 
-On systems that do not have a @code{wait3} call that returns status
-information, the @code{times} system call is used instead.  It provides
-much less information than @code{wait3}, so on those systems @code{time}
-reports most of the resources as zero.
+On systems that do not have a @code{getrusage} call, the @code{times}
+system call is used instead.  It provides much less information than
+@code{getrusage}, so on those systems @code{time} reports most of the
+resources as zero.
 
 The @samp{%I} and @samp{%O} values are allegedly only ``real'' input
 and output and do not include those supplied by caching devices.  The

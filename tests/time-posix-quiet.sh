@@ -2,7 +2,7 @@
 
 # Test output quietness with -q and -p
 
-# Copyright (C) 2017-2021 Free Software Foundation, Inc.
+# Copyright (C) 2017-2021, 2026 Free Software Foundation, Inc.
 #
 # This file is part of GNU Time.
 #
@@ -20,7 +20,7 @@
 # along with GNU time.  If not, see <http://www.gnu.org/licenses/>.
 
 # Written by Assaf Gordon
-. "${test_dir=.}/init.sh"
+. "${srcdir=.}/tests/init.sh"; path_prepend_ ./src
 
 which false > /dev/null || skip_ "'false' program required for this test"
 which sed > /dev/null || skip_ "'sed' program required for this test"
@@ -58,7 +58,7 @@ compare_ out-default exp-default || fail=1
 ##
 ## -q output
 ##
-## originally from Debian, "-q" supresses the "command exited..." message
+## originally from Debian, "-q" suppresses the "command exited..." message
 
 cat<<EOF > exp-q  || framework_failure_ "failed to write exp-q"
 user system :elapsed %CPU (avgtext+avgdata maxresident)k

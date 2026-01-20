@@ -1,5 +1,5 @@
 /* `time' utility to display resource usage of processes, main source file.
-   Copyright (C) 1990-2021 Free Software Foundation, Inc.
+   Copyright (C) 1990-2021, 2026 Free Software Foundation, Inc.
 
    Originally written by David Keppel <pardo@cs.washington.edu>.
    Heavily modified by David MacKenzie <djm@gnu.ai.mit.edu>.
@@ -19,10 +19,10 @@
 
    You should have received a copy of the GNU General Public License
    along with GNU Time.  If not, see <http://www.gnu.org/licenses/>.
-*/ 
+*/
 
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -32,15 +32,15 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdnoreturn.h>
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
 #include "sig2str.h"
 #include "progname.h"
-#include "error.h"
-#define Version VERSION
+#include <error.h>
+
+#include "timespec.h"
+#include "version.h"
 #include "version-etc.h"
 
 #include "resuse.h"
@@ -74,10 +74,6 @@ enum
     "David Keppel",                 \
     "David MacKenzie",              \
     "Assaf Gordon"
-
-
-/* A Pointer to a signal handler.  */
-typedef RETSIGTYPE (*sighandler) ();
 
 /* msec = milliseconds = 1/1,000 (1*10e-3) second.
    usec = microseconds = 1/1,000,000 (1*10e-6) second.  */
@@ -119,10 +115,10 @@ typedef RETSIGTYPE (*sighandler) ();
 
    sysconf(_SC_CLK_TCK) is *unrelated*.  */
 
-#if defined(sun3) || defined(hp300) || defined(ibm032)
+#if defined sun3 || defined hp300 || defined ibm032
 #define TICKS_PER_SEC 50
 #endif
-#if defined(mips)
+#if defined mips
 #define TICKS_PER_SEC 250
 #endif
 #ifndef TICKS_PER_SEC
@@ -148,7 +144,7 @@ static const char *const posix_format = "real %e\nuser %U\nsys %S";
    Keep this output to 24 lines so users on terminals can see it all.
 
    The format string is used two ways: as a format string, and in
-   verbose mode, to document all the possible formatting possiblities.
+   verbose mode, to document all the possible formatting possibilities.
    When `longstats' is used as a format string, it has to be put into
    one contiguous string (e.g., into a `char[]').  We could alternatively
    store it as a `char *' and convert it into a `*char[]' when we need
@@ -200,7 +196,7 @@ static const char *output_format;
 /* Quiet mode: do not print info about abnormal terminations */
 static bool quiet;
 
-static struct option longopts[] =
+static struct option const longopts[] =
 {
   {"append", no_argument, NULL, 'a'},
   {"format", required_argument, NULL, 'f'},
@@ -216,7 +212,7 @@ static struct option longopts[] =
 # define PROGRAM_NAME "time"
 
 
-noreturn static void
+static _Noreturn void
 usage (int status)
 {
   if (status != EXIT_SUCCESS)
@@ -322,10 +318,7 @@ for details about the options it supports.\n",
 /* Print ARGV to FP, with each entry in ARGV separated by FILLER.  */
 
 static void
-fprintargv (fp, argv, filler)
-     FILE *fp;
-     const char *const *argv;
-     const char *filler;
+fprintargv (FILE *fp, const char *const *argv, const char *filler)
 {
   const char *const *av;
 
@@ -337,19 +330,18 @@ fprintargv (fp, argv, filler)
       fputs (*av, fp);
     }
   if (ferror (fp))
-    error (1, errno, "write error");
+    error (EXIT_FAILURE, errno, "write error");
 }
 
 /* Return a null-terminated string containing the concatenation,
    in order, of all of the elements of ARGV.
    The '\0' at the end of each ARGV-element is not copied.
-   Example:	char *argv[] = {"12", "ab", ".,"};
- 		linear_argv(argv) == "12ab.,"
+   Example:     char *argv[] = {"12", "ab", ".,"};
+                linear_argv(argv) == "12ab.,"
    Print a message and return NULL if memory allocation failed.  */
 
 static char *
-linear_argv (argv)
-     const char *const *argv;
+linear_argv (const char *const *argv)
 {
   const char *const *s;		/* Each string in ARGV.  */
   char *new;			/* Allocated space.  */
@@ -428,11 +420,7 @@ linear_argv (argv)
    RESP is resource information on the command.  */
 
 static void
-summarize (fp, fmt, command, resp)
-     FILE *fp;
-     const char *fmt;
-     const char **command;
-     RESUSE *resp;
+summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 {
   unsigned long r;		/* Elapsed real milliseconds.  */
   unsigned long v;		/* Elapsed virtual (CPU) milliseconds.  */
@@ -457,12 +445,14 @@ summarize (fp, fmt, command, resp)
      check the time value.  If it is zero, then we take `evasive action'
      instead of calculating a value.  */
 
-  r = resp->elapsed.tv_sec * 1000 + resp->elapsed.tv_usec / 1000;
+  struct timespec elapsed_time = timespec_sub (resp->end_time,
+                                               resp->start_time);
+  r = elapsed_time.tv_sec * 1000 + elapsed_time.tv_nsec / 1000000;
 
   v = resp->ru.ru_utime.tv_sec * 1000 + resp->ru.ru_utime.TV_MSEC +
     resp->ru.ru_stime.tv_sec * 1000 + resp->ru.ru_stime.TV_MSEC;
 
-  us_r = resp->elapsed.tv_usec;
+  us_r = elapsed_time.tv_nsec / 1000;
   us_v = resp->ru.ru_utime.tv_usec + resp->ru.ru_stime.tv_usec;
 
   while (*fmt)
@@ -489,16 +479,16 @@ summarize (fp, fmt, command, resp)
               break;
 
             case 'E':		/* Elapsed real (wall clock) time.  */
-              if (resp->elapsed.tv_sec >= 3600)	/* One hour -> h:m:s.  */
+              if (elapsed_time.tv_sec >= 3600)	/* One hour -> h:m:s.  */
                 fprintf (fp, "%ld:%02ld:%02ld",
-                         (long int)(resp->elapsed.tv_sec / 3600),
-                         (long int)((resp->elapsed.tv_sec % 3600) / 60),
-                         (long int)(resp->elapsed.tv_sec % 60));
+                         (long int)(elapsed_time.tv_sec / 3600),
+                         (long int)((elapsed_time.tv_sec % 3600) / 60),
+                         (long int)(elapsed_time.tv_sec % 60));
               else
                 fprintf (fp, "%ld:%02ld.%02ld",	/* -> m:s.  */
-                         (long int)(resp->elapsed.tv_sec / 60),
-                         (long int)(resp->elapsed.tv_sec % 60),
-                         (long int)(resp->elapsed.tv_usec / 10000));
+                         (long int)(elapsed_time.tv_sec / 60),
+                         (long int)(elapsed_time.tv_sec % 60),
+                         (long int)(elapsed_time.tv_nsec / 10000000));
               break;
 
             case 'F':		/* Major page faults.  */
@@ -620,8 +610,8 @@ summarize (fp, fmt, command, resp)
 
             case 'e':		/* Elapsed real time in seconds.  */
               fprintf (fp, "%ld.%02ld",
-                       (long int)resp->elapsed.tv_sec,
-                       (long int)(resp->elapsed.tv_usec / 10000));
+                       (long int)elapsed_time.tv_sec,
+                       (long int)(elapsed_time.tv_nsec / 10000000));
               break;
 
             case 'k':		/* Signals delivered.  */
@@ -693,12 +683,12 @@ summarize (fp, fmt, command, resp)
         }
 
       if (ferror (fp))
-        error (1, errno, "write error");
+        error (EXIT_FAILURE, errno, "write error");
     }
   putc ('\n', fp);
 
   if (ferror (fp))
-    error (1, errno, "write error");
+    error (EXIT_FAILURE, errno, "write error");
 }
 
 /* Initialize the options and parse the command line arguments.
@@ -712,9 +702,7 @@ summarize (fp, fmt, command, resp)
    Return the command line to run and gather statistics on.  */
 
 static const char **
-getargs (argc, argv)
-     int argc;
-     char **argv;
+getargs (int argc, char **argv)
 {
   int optc;
   char *format;			/* Format found in environment.  */
@@ -798,12 +786,10 @@ getargs (argc, argv)
    Put the statistics in *RESP.  */
 
 static void
-run_command (cmd, resp)
-     char *const *cmd;
-     RESUSE *resp;
+run_command (const char **cmd, RESUSE *resp)
 {
   pid_t pid;			/* Pid of child.  */
-  sighandler interrupt_signal, quit_signal;
+  sighandler_t interrupt_signal, quit_signal;
   int saved_errno;
 
   resuse_start (resp);
@@ -813,9 +799,7 @@ run_command (cmd, resp)
     error (EXIT_CANCELED, errno, "cannot fork");
   else if (pid == 0)
     {				/* If child.  */
-      /* Don't cast execvp arguments; that causes errors on some systems,
-	 versus merely warnings if the cast is left off.  */
-      execvp (cmd[0], cmd);
+      execvp (cmd[0], (char * const *) cmd);
       saved_errno = errno;
       error (0, errno, "cannot run %s", cmd[0]);
       _exit (saved_errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
@@ -826,7 +810,7 @@ run_command (cmd, resp)
   quit_signal = signal (SIGQUIT, SIG_IGN);
 
   if (resuse_end (pid, resp) == 0)
-    error (1, errno, "error waiting for child process");
+    error (EXIT_FAILURE, errno, "error waiting for child process");
 
   /* Re-enable signals.  */
   signal (SIGINT, interrupt_signal);
@@ -834,9 +818,7 @@ run_command (cmd, resp)
 }
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   const char **command_line;
   RESUSE res;

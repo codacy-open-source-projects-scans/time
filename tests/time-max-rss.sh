@@ -2,7 +2,7 @@
 
 # Test MAX-RSS (Resident size) reporting
 
-# Copyright (C) 2017-2021 Free Software Foundation, Inc.
+# Copyright (C) 2017-2021, 2026 Free Software Foundation, Inc.
 #
 # This file is part of GNU Time.
 #
@@ -20,7 +20,7 @@
 # along with GNU time.  If not, see <http://www.gnu.org/licenses/>.
 
 # Written by Assaf Gordon
-. "${test_dir=.}/init.sh"
+. "${srcdir=.}/tests/init.sh"; path_prepend_ ./src
 
 fail=
 
@@ -46,7 +46,7 @@ d=$(( c - b ))
 test "$b" -eq "0" && test "$c" -eq 0 \
   && skip_ "getrusage(2) returns zero in ru_maxrss"
 
-# There could be alot of variation between each invocation,
+# There could be a lot of variation between each invocation,
 # accept a reasonable range
 if test "$d" -ge 5000 && test "$d" -le 6000 ; then
     : # acceptable values: 5000-6000 KB

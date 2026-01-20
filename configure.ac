@@ -1,11 +1,28 @@
-dnl Process this file with autoconf to produce a configure script.
+# -*- autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+# Copyright (C) 1990-2021, 2026 Free Software Foundation, Inc.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 dnl Minimum Autoconf version required.
 AC_PREREQ([2.69])
 
 AC_INIT([GNU Time],
         m4_esyscmd([build-aux/git-version-gen .tarball-version]),
-        [bug-time@gnu.org], [],
+        [bug-time@gnu.org],
+        [time],
         [https://www.gnu.org/software/time/])
 
 AC_CONFIG_SRCDIR([src/time.c])
@@ -27,10 +44,9 @@ AM_INIT_AUTOMAKE([
 
 dnl Checks for programs.
 AC_USE_SYSTEM_EXTENSIONS
-AC_PROG_CC_STDC
+AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
-AC_PROG_GCC_TRADITIONAL
 AC_PROG_INSTALL
 AC_C_INLINE
 
@@ -59,18 +75,18 @@ gl_WARN_ADD([-Wsuggest-attribute=pure])
 AC_SUBST([WARN_CFLAGS])
 
 dnl Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_HEADER_SYS_WAIT
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_TYPE_SIGNAL
 
 dnl Checks for library functions.
 AC_FUNC_VPRINTF
-AC_FUNC_WAIT3
 AC_CHECK_FUNCS(strerror)
 
 

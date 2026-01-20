@@ -1,3 +1,14 @@
+GNU time NEWS                                         -*- outline -*-
+
+* Noteworthy changes in release ?.? (????-??-??) [?]
+
+** Improvements
+
+  time now uses the more portable waitpid and getrusage system calls
+  instead of wait3.
+
+  time can now be built using a C23 compiler.
+
 * Noteworthy changes in release 1.9 (2018-03-12) [stable]
 
 ** Improvements
@@ -8,7 +19,7 @@
 
 ** Changes in behaviour
 
-  "time -p" no longers adds the "Command exited with non-zero status" message.
+  "time -p" no longer adds the "Command exited with non-zero status" message.
   This is a backward-incompatible change for better POSIX compliance.
   Many downstream distributions previously patched 'time' to behave this way
   (Debian added '-q', Fedora patched '-p').
@@ -85,3 +96,14 @@ Major changes in version 1.4:
 * Support for systems without the BSD getrusage and wait3 calls.
 * Improved configuration.
 * Clarified documentation of some resources.
+
+========================================================================
+
+Copyright (C) 1990-2021, 2026 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the "GNU Free
+Documentation License" file as part of this distribution.
