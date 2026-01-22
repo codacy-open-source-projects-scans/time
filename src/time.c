@@ -141,43 +141,32 @@ static const char *const default_format =
 static const char *const posix_format = "real %e\nuser %U\nsys %S";
 
 /* Format string for printing all statistics verbosely.
-   Keep this output to 24 lines so users on terminals can see it all.
+   Keep this output to 24 lines so users on terminals can see it all.  */
+static char const *verbose_format =
+  ("\tCommand being timed: \"%C\"\n"
+   "\tUser time (seconds): %U\n"
+   "\tSystem time (seconds): %S\n"
+   "\tPercent of CPU this job got: %P\n"
+   "\tElapsed (wall clock) time (h:mm:ss or m:ss): %E\n"
+   "\tAverage shared text size (kbytes): %X\n"
+   "\tAverage unshared data size (kbytes): %D\n"
+   "\tAverage stack size (kbytes): %p\n"
+   "\tAverage total size (kbytes): %K\n"
+   "\tMaximum resident set size (kbytes): %M\n"
+   "\tAverage resident set size (kbytes): %t\n"
+   "\tMajor (requiring I/O) page faults: %F\n"
+   "\tMinor (reclaiming a frame) page faults: %R\n"
+   "\tVoluntary context switches: %w\n"
+   "\tInvoluntary context switches: %c\n"
+   "\tSwaps: %W\n"
+   "\tFile system inputs: %I\n"
+   "\tFile system outputs: %O\n"
+   "\tSocket messages sent: %s\n"
+   "\tSocket messages received: %r\n"
+   "\tSignals delivered: %k\n"
+   "\tPage size (bytes): %Z\n"
+   "\tExit status: %x");
 
-   The format string is used two ways: as a format string, and in
-   verbose mode, to document all the possible formatting possibilities.
-   When `longstats' is used as a format string, it has to be put into
-   one contiguous string (e.g., into a `char[]').  We could alternatively
-   store it as a `char *' and convert it into a `*char[]' when we need
-   it as documentation, but most compilers choke on very long strings.  */
-
-static const char *const longstats[] =
-{
-  "\tCommand being timed: \"%C\"\n",
-  "\tUser time (seconds): %U\n",
-  "\tSystem time (seconds): %S\n",
-  "\tPercent of CPU this job got: %P\n",
-  "\tElapsed (wall clock) time (h:mm:ss or m:ss): %E\n",
-  "\tAverage shared text size (kbytes): %X\n",
-  "\tAverage unshared data size (kbytes): %D\n",
-  "\tAverage stack size (kbytes): %p\n",
-  "\tAverage total size (kbytes): %K\n",
-  "\tMaximum resident set size (kbytes): %M\n",
-  "\tAverage resident set size (kbytes): %t\n",
-  "\tMajor (requiring I/O) page faults: %F\n",
-  "\tMinor (reclaiming a frame) page faults: %R\n",
-  "\tVoluntary context switches: %w\n",
-  "\tInvoluntary context switches: %c\n",
-  "\tSwaps: %W\n",
-  "\tFile system inputs: %I\n",
-  "\tFile system outputs: %O\n",
-  "\tSocket messages sent: %s\n",
-  "\tSocket messages received: %r\n",
-  "\tSignals delivered: %k\n",
-  "\tPage size (bytes): %Z\n",
-  "\tExit status: %x",
-  NULL
-};
-
 /* If true, show an English description next to each statistic.  */
 static bool verbose;
 
@@ -332,49 +321,6 @@ fprintargv (FILE *fp, const char *const *argv, const char *filler)
   if (ferror (fp))
     error (EXIT_FAILURE, errno, "write error");
 }
-
-/* Return a null-terminated string containing the concatenation,
-   in order, of all of the elements of ARGV.
-   The '\0' at the end of each ARGV-element is not copied.
-   Example:     char *argv[] = {"12", "ab", ".,"};
-                linear_argv(argv) == "12ab.,"
-   Print a message and return NULL if memory allocation failed.  */
-
-static char *
-linear_argv (const char *const *argv)
-{
-  const char *const *s;		/* Each string in ARGV.  */
-  char *new;			/* Allocated space.  */
-  char *dp;			/* Copy in to destination.  */
-  const char *sp;		/* Copy from source.  */
-  int size;
-
-  /* Find length of ARGV and allocate.  */
-  size = 1;
-  for (s = argv; *s; ++s)
-    size += strlen (*s);
-  new = (char *) malloc (size);
-  if (new == NULL)
-    {
-      fprintf (stderr, "%s: virtual memory exhausted\n", program_name);
-      return NULL;
-    }
-
-  /* Copy each string in ARGV to the new string.  At the end of
-     each string copy, back up `dp' so that on the next string,
-     the `\0' will be overwritten.  */
-  for (s = argv, sp = *s, dp = new; *s; ++s)
-    {
-      sp = *s;
-      while ((*dp++ = *sp++) != '\0')
-	/* Do nothing.  */ ;
-      --dp;
-    }
-
-  return new;
-}
-
-
 
 /* summarize: Report on the system use of a command.
 
@@ -770,14 +716,9 @@ getargs (int argc, char **argv)
 	error (EXIT_CANCELED, errno, "%s", outfile);
     }
 
-  /* If the user specified verbose output, we need to convert
-     `longstats' to a `char *'.  */
+  /* If --verbose is used, disregard --format and use VERBOSE_FORMAT.  */
   if (verbose)
-    {
-      output_format = (const char *) linear_argv (longstats);
-      if (output_format == NULL)
-	exit (EXIT_CANCELED);		/* Out of memory.  */
-    }
+    output_format = verbose_format;
 
   return (const char **) &argv[optind];
 }
