@@ -18,7 +18,11 @@
 EXTRA_DIST =		\
   .prev-version		\
   .version		\
-  ChangeLog-2015
+  ChangeLog-2015	\
+  bootstrap		\
+  bootstrap.conf	\
+  cfg.mk		\
+  maint.mk
 
 ACLOCAL_AMFLAGS = -I m4
 

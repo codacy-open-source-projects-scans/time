@@ -538,24 +538,31 @@ Print the version number of @code{time} and exit.
 @cindex problems
 @cindex reporting bugs
 
-To report bugs, suggest enhancements or otherwise discuss GNU Datamash,
-please send electronic mail to @email{bug-time.org}.
+To report bugs, suggest enhancements or otherwise discuss GNU
+@code{time}, please send electronic mail to @email{bug-time.org}.
 
 @cindex checklist for bug reports
 For bug reports, please include enough information for the maintainers
 to reproduce the problem.  Generally speaking, that means:
 
 @itemize @bullet
-@item The version numbers of Datamash (which you can find by running
-      @w{@samp{time --version}}) and any other program(s) or
-      manual(s) involved.
-@item Hardware and operating system names and versions.
-@item The contents of any input files necessary to reproduce the bug.
-@item The expected behavior and/or output.
-@item A description of the problem and samples of any erroneous output.
-@item Options you gave to @command{configure} other than specifying
- installation directories.
-@item Anything else that you think would be helpful.
+@item
+The version numbers of GNU @code{time} (which you can find by running
+@w{@samp{env time --version}}) and any other program(s) or manual(s)
+involved.
+@item
+Hardware and operating system names and versions.
+@item
+The contents of any input files necessary to reproduce the bug.
+@item
+The expected behavior and/or output.
+@item
+A description of the problem and samples of any erroneous output.
+@item
+Options you gave to @command{configure} other than specifying
+installation directories.
+@item
+Anything else that you think would be helpful.
 @end itemize
 
 When in doubt whether something is needed or not, include it.  It's
