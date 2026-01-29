@@ -39,16 +39,14 @@
 #include "progname.h"
 #include <error.h>
 
+#include "system.h"
+
 #include "timespec.h"
 #include "version.h"
 #include "version-etc.h"
 
 #include "resuse.h"
 #include "rusage-kb.h"
-
-/* For now, no gettext support */
-#define _(x) (x)
-
 
 /* Exit statuses for programs like 'env' that exec other programs.
    Copied from coreutils' system.h */
@@ -284,13 +282,7 @@ Usage: %s [-apvV] [-f format] [-o file] [--append] [--verbose]\n\
   fputs (default_format, stdout);
   fputc ('\n',stdout);
 
-  /* Warning about shell's built-in 'time', copied from
-     coreutils' */
-  printf ("\n\
-NOTE: your shell may have its own version of %s, which usually supersedes\n\
-the version described here.  Please refer to your shell's documentation\n\
-for details about the options it supports.\n",
-          PROGRAM_NAME);
+  printf (USAGE_BUILTIN_WARNING, PROGRAM_NAME);
 
   /* General help information, copied from coreutils' emit_ancillary_info */
   printf (_("\n%s website: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);

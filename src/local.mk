@@ -18,6 +18,9 @@
 
 AM_CFLAGS = $(WERROR_CFLAGS)
 
+noinst_HEADERS =	\
+  src/system.h
+
 noinst_LIBRARIES += src/libver.a
 nodist_src_libver_a_SOURCES = src/version.c src/version.h
 
