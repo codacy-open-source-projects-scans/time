@@ -163,28 +163,28 @@ static char const *verbose_format =
    "\tExit status: %x");
 
 /* If true, show an English description next to each statistic.  */
-static bool verbose;
+static bool verbose = false;
 
 /* Name of output file.  Only used if -o option is given.  */
-static const char *outfile;
+static const char *outfile = NULL;
 
 /* Output stream, stderr by default.  */
-static FILE *outfp;
+static FILE *outfp = NULL;
 
 /* If true, append to `outfile' rather than truncating it.  */
-static bool append;
+static bool append = false;
 
 /* The output format string.  */
-static const char *output_format;
+static const char *output_format = default_format;
 
 /* Quiet mode: do not print info about abnormal terminations */
-static bool quiet;
+static bool quiet = false;
 
 static struct option const longopts[] =
 {
   {"append", no_argument, NULL, 'a'},
   {"format", required_argument, NULL, 'f'},
-  {"help", no_argument, NULL, 'h'},
+  {"help", no_argument, NULL, GETOPT_HELP_CHAR},
   {"output-file", required_argument, NULL, 'o'},
   {"portability", no_argument, NULL, 'p'},
   {"quiet", no_argument, NULL, 'q'},
@@ -249,7 +249,7 @@ Usage: %s [-apvV] [-f format] [-o file] [--append] [--verbose]\n\
 
 
   fputs (_("\
-  -h,  --help               display this help and exit\n"), stdout);
+       --help               display this help and exit\n"), stdout);
   fputs (_("\
   -V,  --version            output version information and exit\n"), stdout);
 
@@ -640,20 +640,6 @@ static const char **
 getargs (int argc, char **argv)
 {
   int optc;
-  char *format;			/* Format found in environment.  */
-
-  /* Initialize the option flags.  */
-  verbose = false;
-  outfile = NULL;
-  outfp = stderr;
-  append = false;
-  output_format = default_format;
-
-  /* Set the format string from the environment.  Do this before checking
-     the args so that we won't clobber a user-specified format.  */
-  format = getenv ("TIME");
-  if (format)
-    output_format = format;
 
   while ((optc = getopt_long (argc, argv, "+af:o:pqvV", longopts, (int *) 0))
 	 != EOF)
@@ -666,24 +652,25 @@ getargs (int argc, char **argv)
 	case 'f':
 	  output_format = optarg;
 	  break;
-	case 'h':
-	  usage (EXIT_SUCCESS);
 	case 'o':
 	  outfile = optarg;
 	  break;
 	case 'p':
 	  output_format = posix_format;
 	  break;
-    case 'q':
-      quiet = true;
-      break;
+        case 'q':
+          quiet = true;
+          break;
 	case 'v':
 	  verbose = true;
 	  break;
 	case 'V':
-      version_etc (stdout, PROGRAM_NAME, PACKAGE_NAME, Version, AUTHORS,
-                   (char *) NULL);
-      exit (EXIT_SUCCESS);
+          version_etc (stdout, PROGRAM_NAME, PACKAGE_NAME, Version, AUTHORS,
+                       (char *) NULL);
+          exit (EXIT_SUCCESS);
+        case GETOPT_HELP_CHAR:
+          usage (EXIT_SUCCESS);
+          break;
 	default:
 	  usage (EXIT_CANCELED);
 	}
@@ -695,7 +682,9 @@ getargs (int argc, char **argv)
       usage (EXIT_CANCELED);
     }
 
-  if (outfile)
+  if (! outfile)
+    outfp = stderr;
+  else
     {
       if (append)
 	outfp = fopen (outfile, "a");
@@ -708,6 +697,14 @@ getargs (int argc, char **argv)
   /* If --verbose is used, disregard --format and use VERBOSE_FORMAT.  */
   if (verbose)
     output_format = verbose_format;
+  else if (output_format == default_format)
+    {
+      /* If neither --verbose, --portability, or --format is used, check if
+         the format string is specified by the TIME environment variable.  */
+      char const *env_format = getenv ("TIME");
+      if (env_format)
+        output_format = env_format;
+    }
 
   return (const char **) &argv[optind];
 }
