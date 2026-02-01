@@ -3,7 +3,7 @@
 
    Written by David MacKenzie, with help from
    arnej@imf.unit.no (Arne Henrik Juul)
-   and pinard@iro.umontreal.ca (Francois Pinard).
+   and pinard@iro.umontreal.ca (François Pinard).
 
    This file is part of GNU Time.
 
