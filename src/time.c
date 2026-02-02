@@ -583,14 +583,15 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 
             case '\0':
               putc ('?', fp);
-              return;
+              break;
 
             default:
               putc ('?', fp);
               putc (*fmt, fp);
             }
 
-          ++fmt;
+          if (*fmt != '\0')
+            ++fmt;
           break; /* end of "case '%'" */
 
         case '\\':		/* Format escape.  */
@@ -605,12 +606,17 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
             case '\\':
               putc ('\\', fp);
               break;
+            case '\0':
+              putc ('?', fp);
+              putc ('\\', fp);
+              break;
             default:
               putc ('?', fp);
               putc ('\\', fp);
               putc (*fmt, fp);
             }
-          ++fmt;
+          if (*fmt != '\0')
+            ++fmt;
           break;
 
         default:
@@ -725,7 +731,11 @@ run_command (const char **cmd, RESUSE *resp)
   if (pid < 0)
     error (EXIT_CANCELED, errno, "cannot fork");
   else if (pid == 0)
-    {				/* If child.  */
+    {
+      /* If 'time' is writing to a file specified by --output, try to close the
+         file in the child process before executing CMD.  */
+      if (outfp != stderr)
+        fclose (outfp);
       execvp (cmd[0], (char * const *) cmd);
       saved_errno = errno;
       error (0, errno, "cannot run %s", cmd[0]);
