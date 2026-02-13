@@ -32,6 +32,12 @@ old_NEWS_hash = 3702ab788541f5a222d97219516b5096
 
 export VERBOSE = yes
 
+# Augment AM_CFLAGS to include our per-directory options:
+AM_CFLAGS += $($(@D)_CFLAGS)
+
+src_CFLAGS = $(WARN_CFLAGS)
+lib_CFLAGS = $(GNULIB_WARN_CFLAGS)
+
 update-copyright-env = \
   UPDATE_COPYRIGHT_USE_INTERVALS=1 \
   UPDATE_COPYRIGHT_MAX_LINE_LENGTH=79

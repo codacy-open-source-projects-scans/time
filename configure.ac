@@ -50,23 +50,122 @@ AC_C_INLINE
 gl_EARLY
 gl_INIT
 
-# Add extra compilation warnings. These will only apply to src/*.c not to
-# any gnulib modules). See $(WARN_CFLAGS) in Makefile.am
-gl_WARN_ADD([-Wall])
-gl_WARN_ADD([-Wextra])
-gl_WARN_ADD([-Wformat-security])
-gl_WARN_ADD([-Wswitch-enum])
-gl_WARN_ADD([-Wswitch-default])
-gl_WARN_ADD([-Wformat-nonliteral])
-gl_WARN_ADD([-Wunused-parameter])
-gl_WARN_ADD([-Wfloat-equal])
-gl_WARN_ADD([-fdiagnostics-show-option])
-gl_WARN_ADD([-funit-at-a-time])
-gl_WARN_ADD([-Wmissing-format-attribute])
-gl_WARN_ADD([-Wstrict-overflow])
-gl_WARN_ADD([-Wsuggest-attribute=const])
-gl_WARN_ADD([-Wsuggest-attribute=pure])
-AC_SUBST([WARN_CFLAGS])
+AC_DEFINE([GNULIB_NO_VLA], [1], [Define to 1 to disable use of VLAs])
+
+# gl_GCC_VERSION_IFELSE([major], [minor], [run-if-found], [run-if-not-found])
+# ------------------------------------------------
+# If $CPP is gcc-MAJOR.MINOR or newer, then run RUN-IF-FOUND.
+# Otherwise, run RUN-IF-NOT-FOUND.
+AC_DEFUN([gl_GCC_VERSION_IFELSE],
+  [AC_PREPROC_IFELSE(
+    [AC_LANG_PROGRAM(
+      [[
+#if ($1) < __GNUC__ || (($1) == __GNUC__ && ($2) <= __GNUC_MINOR__)
+/* ok */
+#else
+# error "your version of gcc is older than $1.$2"
+#endif
+      ]]),
+    ], [$3], [$4])
+  ]
+)
+
+AC_ARG_ENABLE([gcc-warnings],
+  [AS_HELP_STRING([--enable-gcc-warnings@<:@=TYPE@:>@],
+    [control generation of GCC warnings.  The TYPE 'no' disables
+     warnings (default for non-developer builds); 'yes' generates
+     cheap warnings if available (default for developer builds);
+     'expensive' in addition generates expensive-to-compute warnings
+     if available.])],
+  [case $enableval in
+     no|yes|expensive) ;;
+     *)      AC_MSG_ERROR([bad value $enableval for gcc-warnings option]) ;;
+   esac
+   gl_gcc_warnings=$enableval],
+  [
+   # GCC provides fine-grained control over diagnostics which
+   # is used in gnulib for example to suppress warnings from
+   # certain sections of code.  So if this is available and
+   # we're running from a git repo, then auto enable the warnings.
+   gl_gcc_warnings=no
+   gl_GCC_VERSION_IFELSE([4], [6],
+                         [test -d "$srcdir"/.git \
+                          && ! test -f "$srcdir"/.tarball-version \
+                          && gl_gcc_warnings=yes])]
+)
+
+# clang is unduly picky about some things, even by default.
+if test "$gl_cv_compiler_clang" = yes; then
+  gl_WARN_ADD([-Wno-format-extra-args])
+  gl_WARN_ADD([-Wno-implicit-const-int-float-conversion])
+  gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
+fi
+
+if test $gl_gcc_warnings != no; then
+  gl_WARN_ADD([-Werror], [WERROR_CFLAGS])
+  AC_SUBST([WERROR_CFLAGS])
+
+  ew=
+  AS_IF([test $gl_gcc_warnings != expensive],
+    [# -fanalyzer and related options slow GCC considerably.
+     ew="$ew -fanalyzer -Wno-analyzer-malloc-leak"])
+
+  # This, $nw, is the list of warnings we disable.
+  nw=$ew
+  nw="$nw -Wstack-protector"        # not worth working around for pre GCC 15
+  nw="$nw -Wformat-overflow=2"      # False alarms due to GCC bug 110333
+  nw="$nw -Wformat-truncation=2"    # False alarm in ls.c, probably related
+  nw="$nw -Winline"                 # system.h's readdir_ignoring_dot_and_dotdot
+
+  # Using -Wstrict-overflow is a pain, but the alternative is worse.
+  # For an example, see the code that provoked this report:
+  # https://gcc.gnu.org/PR33498
+  # Code like that still infloops with gcc-4.6.0 and -O2.  Scary indeed.
+
+  gl_MANYWARN_ALL_GCC([ws])
+  AS_VAR_APPEND([ws], [' -Wswitch-enum'])
+  AS_VAR_APPEND([ws], [' -Wtrailing-whitespace'])
+  gl_MANYWARN_COMPLEMENT([ws], [$ws], [$nw])
+  for w in $ws; do
+    gl_WARN_ADD([$w])
+  done
+  gl_WARN_ADD([-Wno-sign-compare])     # Too many warnings for now
+  gl_WARN_ADD([-Wno-format-nonliteral])
+
+  AC_SUBST([WARN_CFLAGS])
+
+  AC_DEFINE([lint], [1], [Define to 1 if the compiler is checking for lint.])
+  AH_VERBATIM([FORTIFY_SOURCE],
+  [/* Enable compile-time and run-time bounds-checking, and some warnings,
+      without upsetting glibc 2.15+. */
+   #if !defined _FORTIFY_SOURCE && defined __OPTIMIZE__ && __OPTIMIZE__
+   # define _FORTIFY_SOURCE 2
+   #endif
+])
+  AC_DEFINE([GNULIB_PORTCHECK], [1], [enable some gnulib portability checks])
+
+  # We use a slightly smaller set of warning options for lib/.
+  # Remove the following and save the result in GNULIB_WARN_CFLAGS.
+  nw=$ew
+  nw="$nw -Wduplicated-branches"    # Too many false alarms
+  nw="$nw -Wformat-truncation=2"
+  nw="$nw -Wunused-macros"
+
+  gl_MANYWARN_COMPLEMENT([GNULIB_WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
+  AC_SUBST([GNULIB_WARN_CFLAGS])
+
+  # For gnulib-tests, the set is slightly smaller still.
+  nw=
+  # It's not worth being this picky about test programs.
+  nw="$nw -Wmissing-variable-declarations"
+  nw="$nw -Wsuggest-attribute=cold"
+  nw="$nw -Wsuggest-attribute=const"
+  nw="$nw -Wsuggest-attribute=format"
+  nw="$nw -Wsuggest-attribute=pure"
+  gl_MANYWARN_COMPLEMENT([GNULIB_TEST_WARN_CFLAGS],
+                         [$GNULIB_WARN_CFLAGS], [$nw])
+  AC_SUBST([GNULIB_TEST_WARN_CFLAGS])
+fi
 
 dnl Checks for header files.
 AC_CHECK_INCLUDES_DEFAULT
