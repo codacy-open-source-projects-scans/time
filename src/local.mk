@@ -18,6 +18,9 @@
 
 AM_CFLAGS = $(WERROR_CFLAGS)
 
+# Tell the linker to omit references to unused shared libraries.
+AM_LDFLAGS = $(IGNORE_UNUSED_LIBRARIES_CFLAGS)
+
 noinst_HEADERS =	\
   src/system.h
 
