@@ -18,6 +18,8 @@
 
 #include <limits.h>
 
+#include "unlocked-io.h"
+
 /* No gettext support for now.  */
 #define _(x) (x)
 

@@ -31,7 +31,6 @@ bin_PROGRAMS = src/time
 
 src_time_SOURCES =	\
   src/time.c		\
-  src/resuse.c		\
   src/resuse.h		\
   src/rusage-kb.h	\
   src/rusage-kb.c

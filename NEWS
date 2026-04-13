@@ -28,6 +28,8 @@ GNU time NEWS                                         -*- outline -*-
 
   time can now be built using a C23 compiler.
 
+  time now uses unlocked stdio functions on platforms that provide them.
+
 * Noteworthy changes in release 1.9 (2018-03-12) [stable]
 
 ** Improvements

@@ -35,10 +35,4 @@ typedef struct
   struct timespec end_time;
 } RESUSE;
 
-/* Prepare to measure a child process.  */
-void resuse_start (RESUSE *resp);
-
-/* Wait for and fill in data on child process PID.  */
-int resuse_end (pid_t pid, RESUSE *resp);
-
 #endif /* _RESUSE_H */

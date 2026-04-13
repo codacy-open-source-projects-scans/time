@@ -683,10 +683,7 @@ getargs (int argc, char **argv)
     outfp = stderr;
   else
     {
-      if (append)
-	outfp = fopen (outfile, "a");
-      else
-	outfp = fopen (outfile, "w");
+      outfp = fopen (outfile, append ? "ae" : "we");
       if (outfp == NULL)
 	error (EXIT_CANCELED, errno, "%s", outfile);
     }
@@ -716,17 +713,13 @@ run_command (const char **cmd, RESUSE *resp)
   sighandler_t interrupt_signal, quit_signal;
   int saved_errno;
 
-  resuse_start (resp);
+  resp->start_time = current_timespec ();
 
   pid = fork ();		/* Run CMD as child process.  */
   if (pid < 0)
     error (EXIT_CANCELED, errno, "cannot fork");
   else if (pid == 0)
     {
-      /* If 'time' is writing to a file specified by --output, try to close the
-         file in the child process before executing CMD.  */
-      if (outfp != stderr)
-        fclose (outfp);
       execvp (cmd[0], (char * const *) cmd);
       saved_errno = errno;
       error (0, errno, "cannot run %s", cmd[0]);
@@ -737,8 +730,14 @@ run_command (const char **cmd, RESUSE *resp)
   interrupt_signal = signal (SIGINT, SIG_IGN);
   quit_signal = signal (SIGQUIT, SIG_IGN);
 
-  if (resuse_end (pid, resp) == 0)
+  if (waitpid (pid, &resp->waitstatus, 0) < 0)
     error (EXIT_FAILURE, errno, "error waiting for child process");
+
+  resp->end_time = current_timespec ();
+
+  if (getrusage (RUSAGE_CHILDREN, &resp->ru) < 0)
+    error (EXIT_FAILURE, errno,
+           "error getting resource usage for child process");
 
   /* Re-enable signals.  */
   signal (SIGINT, interrupt_signal);

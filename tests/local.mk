@@ -50,7 +50,8 @@ all_tests =				\
   tests/time-posix-quiet.sh		\
   tests/time-trailing-backslash.sh	\
   tests/time-verbose.sh			\
-  tests/time-format-T.sh
+  tests/time-format-T.sh		\
+  tests/time-append.sh
 
 # Note: the "9>&2" redirection is part of Automake's parallel-tests.
 #       see also stderr_fileno in 'init.cfg'
