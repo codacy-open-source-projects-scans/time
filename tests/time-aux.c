@@ -274,7 +274,7 @@ busy_sys_sleep (const struct timespec *sleep)
     euid = geteuid();
     gid = getgid();
     egid = getegid();
-    getcwd (buf, 10 + (pid+ppid+uid+euid+gid+egid)&0xF);
+    getcwd (buf, 10 + ((pid+ppid+uid+euid+gid+egid)&0xF));
   }
 }
 

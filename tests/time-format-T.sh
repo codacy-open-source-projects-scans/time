@@ -44,7 +44,7 @@ EOF
 
 # The exit code of 'time' should be the value of KILL signal
 # (e.g. 137 on linux = 126 + 9, but that is not portable, so don't check it).
-time -o out1 -q -f "$FMT" time-aux -S KILL -e 4
+env time -o out1 -q -f "$FMT" time-aux -S KILL -e 4
 compare_ exp1 out1 || fail=1
 
 
@@ -60,7 +60,7 @@ sig-num:
 exit ok:
 EOF
 
-returns_ 4 time -o out2 -q -f "$FMT" time-aux -e 4 || fail=1
+returns_ 4 env time -o out2 -q -f "$FMT" time-aux -e 4 || fail=1
 compare_ exp2 out2 || fail=1
 
 
@@ -75,7 +75,7 @@ sig-num:
 exit ok:ok
 EOF
 
-time -o out3 -q -f "$FMT" time-aux -e 0 || fail=1
+env time -o out3 -q -f "$FMT" time-aux -e 0 || fail=1
 compare_ exp3 out3 || fail=1
 
 exit $fail

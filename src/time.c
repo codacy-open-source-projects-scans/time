@@ -502,11 +502,11 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 
 
                 case '\0':
-                  fprintf (fp, "T=missing letter");
+                  fputs ("T=missing letter", fp);
                   break;
 
                 default:
-                  fprintf (fp, "T?=unknown");
+                  fputs ("T?=unknown", fp);
                   break;
                 }
               break;
