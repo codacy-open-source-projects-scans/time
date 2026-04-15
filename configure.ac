@@ -189,7 +189,7 @@ if test -z "$time_getrusage_mem_units" ; then
   # if envvar 'time_getrusage_mem_units' isn't set,
   # autodetect based on OS.
   case "$host_os" in
-    minix*|aix*|*bsd*|linux*|gnu*|haiku*)
+    minix*|aix*|*bsd*|dragonfly*|linux*|gnu*|haiku*)
                      time_getrusage_mem_units=kb ;;
 
     macos*|darwin*)  time_getrusage_mem_units=bytes ;;

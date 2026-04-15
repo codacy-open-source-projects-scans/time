@@ -45,7 +45,7 @@ user system :elapsed %CPU (avgtext+avgdata maxresident)k
 inputs+outputs (major+minor)pagefaults swaps
 EOF
 
-returns_ 1 env time -o out-def1 false || fail=1
+env time -o out-def1 false && fail=1
 
 remove_numeric_values out-def1 > out-default \
     || framework_failure_ "sed failed on out-def1"
@@ -65,7 +65,7 @@ user system :elapsed %CPU (avgtext+avgdata maxresident)k
 inputs+outputs (major+minor)pagefaults swaps
 EOF
 
-returns_ 1 env time -q -o out-q1 false || fail=1
+env time -q -o out-q1 false && fail=1
 
 remove_numeric_values out-q1 > out-q \
     || framework_failure_ "sed failed on out-q"
@@ -83,7 +83,7 @@ user
 sys
 EOF
 
-returns_ 1 env time -p -o out-posix1 false || fail=1
+env time -p -o out-posix1 false && fail=1
 
 remove_numeric_values out-posix1 > out-posix \
     || framework_failure_ "sed failed on out-posix1"

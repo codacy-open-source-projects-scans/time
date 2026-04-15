@@ -129,8 +129,8 @@ enum
 
 /* The default output format.  */
 static const char *const default_format =
-"%Uuser %Ssystem %Eelapsed %PCPU (%Xavgtext+%Davgdata %Mmaxresident)k\n\
-%Iinputs+%Ooutputs (%Fmajor+%Rminor)pagefaults %Wswaps";
+  ("%Uuser %Ssystem %Eelapsed %PCPU (%Xavgtext+%Davgdata %Mmaxresident)k\n"
+   "%Iinputs+%Ooutputs (%Fmajor+%Rminor)pagefaults %Wswaps");
 
 /* The output format for the -p option .*/
 static const char *const posix_format = "real %e\nuser %U\nsys %S";
@@ -175,7 +175,7 @@ static FILE *outfp = NULL;
 static bool append = false;
 
 /* The output format string.  */
-static const char *output_format = default_format;
+static const char *output_format = NULL;
 
 /* Quiet mode: do not print info about abnormal terminations */
 static bool quiet = false;
@@ -691,13 +691,12 @@ getargs (int argc, char **argv)
   /* If --verbose is used, disregard --format and use VERBOSE_FORMAT.  */
   if (verbose)
     output_format = verbose_format;
-  else if (output_format == default_format)
+  else if (! output_format)
     {
       /* If neither --verbose, --portability, or --format is used, check if
          the format string is specified by the TIME environment variable.  */
       char const *env_format = getenv ("TIME");
-      if (env_format)
-        output_format = env_format;
+      output_format = env_format ? env_format : default_format;
     }
 
   return (const char **) &argv[optind];
