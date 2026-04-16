@@ -2,6 +2,9 @@ GNU time NEWS                                         -*- outline -*-
 
 * Noteworthy changes in release ?.? (????-??-??) [?]
 
+
+* Noteworthy changes in release 1.10 (2026-04-14) [stable]
+
 ** Bug fixes
 
   'time --help' no longer incorrectly lists the short option -h as being
@@ -12,9 +15,8 @@ GNU time NEWS                                         -*- outline -*-
   the --portability option.
   [bug introduced in time-1.8]
 
-  time now closes the file specified by --output in the child process if
-  possible.  Previously the child process would have its file descriptor limit
-  effectively lowered by one.
+  time now opens the file specified by --output with its close-on-exec flag set.
+  Previously the file descriptor would be leaked into the child process.
   [This bug was present in "the beginning".]
 
   time no longer appends the program name to the output when the format string
