@@ -84,6 +84,10 @@ categories of time, memory, and I/O and IPC calls.  Some systems do not
 provide much information about program resource use; @code{time}
 reports unavailable information as zero values (@pxref{Accuracy}).
 
+The resources reported include resources of children of the program
+that have terminated and been waited-for, and their children that have
+terminated and been waited-for, recursively.
+
 The format of the @code{time} command is:
 
 @example
@@ -459,12 +463,15 @@ When the running time of a command is very nearly zero, some values
 is wrong) or a question mark.
 
 Most information shown by @code{time} is derived from the
-@code{getrusage} system call.  The numbers are only as good as those
-returned by @code{getrusage}.  Many systems do not measure all of the
-resources that @code{time} can report on; those resources are reported
-as zero.  The systems that measure most or all of the resources are
-based on 4.2 or 4.3BSD.  Later BSD releases use different memory
-management code that measures fewer resources.
+@code{getrusage} system call.  The function is called with the
+@code{RUSAGE_CHILDREN} parameter to collect child resources.  The
+numbers are only as good as those returned by @code{getrusage}.
+
+Many systems do not measure all of the resources that @code{time} can
+report on; those resources are reported as zero.  The systems that
+measure most or all of the resources are based on 4.2 or 4.3BSD.
+Later BSD releases use different memory management code that measures
+fewer resources.
 
 On systems that do not have a @code{getrusage} call, the @code{times}
 system call is used instead.  It provides much less information than
