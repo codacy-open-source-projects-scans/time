@@ -28,7 +28,7 @@ bootstrap-tools = autoconf,automake,gnulib
 # I.e., base64 to reduce space, and possibly tagged to ease usage.
 announce_gen_args = --cksum-checksums
 
-old_NEWS_hash = 0334d4d30d4a192a909f92554813b166
+old_NEWS_hash = 6846e647b6f358bb0216ad33b3e5e86e
 
 export VERBOSE = yes
 

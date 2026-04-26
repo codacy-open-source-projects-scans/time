@@ -349,11 +349,6 @@ fprintargv (FILE *fp, const char *const *argv, const char *filler)
 static void
 summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 {
-  unsigned long r;		/* Elapsed real milliseconds.  */
-  unsigned long v;		/* Elapsed virtual (CPU) milliseconds.  */
-  unsigned long us_r;		/* Elapsed real microseconds.  */
-  unsigned long us_v;		/* Elapsed virtual (CPU) microseconds.  */
-
   if (!quiet && output_format != posix_format)
     {
       if (WIFSTOPPED (resp->waitstatus))
@@ -374,13 +369,34 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 
   struct timespec elapsed_time = timespec_sub (resp->end_time,
                                                resp->start_time);
-  r = elapsed_time.tv_sec * 1000 + elapsed_time.tv_nsec / 1000000;
 
-  v = resp->ru.ru_utime.tv_sec * 1000 + resp->ru.ru_utime.TV_MSEC +
-    resp->ru.ru_stime.tv_sec * 1000 + resp->ru.ru_stime.TV_MSEC;
+  /* Elapsed real milliseconds.  */
+  uintmax_t r;
+  if (ckd_mul (&r, elapsed_time.tv_sec, 1000)
+      || ckd_add (&r, r, elapsed_time.tv_nsec / 1000000))
+    r = UINTMAX_MAX;
 
-  us_r = elapsed_time.tv_nsec / 1000;
-  us_v = resp->ru.ru_utime.tv_usec + resp->ru.ru_stime.tv_usec;
+  /* Elapsed virtual (CPU) milliseconds.  */
+  uintmax_t v;
+
+  {
+    uintmax_t user_time;
+    uintmax_t system_time;
+    if (ckd_mul (&user_time, resp->ru.ru_utime.tv_sec, 1000)
+        || ckd_add (&user_time, user_time, resp->ru.ru_utime.TV_MSEC)
+        || ckd_mul (&system_time, resp->ru.ru_stime.tv_sec, 1000)
+        || ckd_add (&system_time, system_time, resp->ru.ru_stime.TV_MSEC)
+        || ckd_add (&v, user_time, system_time))
+      v = UINTMAX_MAX;
+  }
+
+  /* Elapsed real microseconds.  */
+  uintmax_t us_r = elapsed_time.tv_nsec / 1000;
+
+  /* Elapsed virtual (CPU) microseconds.  */
+  uintmax_t us_v;
+  if (ckd_add (&us_v, resp->ru.ru_utime.tv_usec, resp->ru.ru_stime.tv_usec))
+    us_v = UINTMAX_MAX;
 
   while (*fmt)
     {
@@ -446,9 +462,9 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
             case 'P':		/* Percent of CPU this job got.  */
               /* % cpu is (total cpu time)/(elapsed time).  */
               if (r > 0)
-                fprintf (fp, "%lu%%", (v * 100 / r));
+                fprintf (fp, "%" PRIuMAX "%%", (v * 100 / r));
               else if (us_r > 0)
-                fprintf (fp, "%lu%%", (us_v * 100 / us_r));
+                fprintf (fp, "%" PRIuMAX "%%", (us_v * 100 / us_r));
               else
                 fprintf (fp, "?%%");
               break;
@@ -749,6 +765,8 @@ main (int argc, char **argv)
   const char **command_line;
   RESUSE res;
   int status;
+
+  setlocale (LC_ALL, "");
 
   set_program_name (argv[0]);
   command_line = getargs (argc, argv);
