@@ -7,6 +7,9 @@ GNU time NEWS                                         -*- outline -*-
   time now sets the locale so that strerror(3) returns localized error strings
   on operating systems that supply them.
 
+  time now uses the decimal point specified by the current locale to separate
+  seconds from fractional seconds.
+
 
 * Noteworthy changes in release 1.10 (2026-04-14) [stable]
 

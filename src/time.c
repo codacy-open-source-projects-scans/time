@@ -180,6 +180,9 @@ static const char *output_format = NULL;
 /* Quiet mode: do not print info about abnormal terminations */
 static bool quiet = false;
 
+/* The representation of the decimal point in the current locale.  */
+static char const *decimal_point;
+
 static struct option const longopts[] =
 {
   {"append", no_argument, NULL, 'a'},
@@ -428,9 +431,10 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
                          (long int)((elapsed_time.tv_sec % 3600) / 60),
                          (long int)(elapsed_time.tv_sec % 60));
               else
-                fprintf (fp, "%ld:%02ld.%02ld",	/* -> m:s.  */
+                fprintf (fp, "%ld:%02ld%s%02ld",	/* -> m:s.  */
                          (long int)(elapsed_time.tv_sec / 60),
                          (long int)(elapsed_time.tv_sec % 60),
+                         decimal_point,
                          (long int)(elapsed_time.tv_nsec / 10000000));
               break;
 
@@ -474,8 +478,9 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
               break;
 
             case 'S':		/* System time.  */
-              fprintf (fp, "%ld.%02ld",
+              fprintf (fp, "%ld%s%02ld",
                        (long int)resp->ru.ru_stime.tv_sec,
+                       decimal_point,
                        (long int)(resp->ru.ru_stime.TV_MSEC / 10));
               break;
 
@@ -528,8 +533,9 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
               break;
 
             case 'U':		/* User time.  */
-              fprintf (fp, "%ld.%02ld",
+              fprintf (fp, "%ld%s%02ld",
                        (long int)(resp->ru.ru_utime.tv_sec),
+                       decimal_point,
                        (long int)(resp->ru.ru_utime.TV_MSEC / 10));
               break;
 
@@ -552,8 +558,9 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
               break;
 
             case 'e':		/* Elapsed real time in seconds.  */
-              fprintf (fp, "%ld.%02ld",
+              fprintf (fp, "%ld%s%02ld",
                        (long int)elapsed_time.tv_sec,
+                       decimal_point,
                        (long int)(elapsed_time.tv_nsec / 10000000));
               break;
 
@@ -762,18 +769,21 @@ run_command (const char **cmd, RESUSE *resp)
 int
 main (int argc, char **argv)
 {
-  const char **command_line;
-  RESUSE res;
-  int status;
-
+  set_program_name (argv[0]);
   setlocale (LC_ALL, "");
 
-  set_program_name (argv[0]);
-  command_line = getargs (argc, argv);
+  const char **command_line = getargs (argc, argv);
+
+  RESUSE res;
   run_command (command_line, &res);
+
+  struct lconv const *locale = localeconv ();
+  decimal_point = (locale->decimal_point[0] ? locale->decimal_point : ".");
   summarize (outfp, output_format, command_line, &res);
+
   fflush (outfp);
 
+  int status;
   if (WIFSTOPPED (res.waitstatus))
     status = WSTOPSIG (res.waitstatus) + SIGNALLED_OFFSET;
   else if (WIFSIGNALED (res.waitstatus))
