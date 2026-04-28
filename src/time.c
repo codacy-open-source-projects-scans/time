@@ -291,16 +291,13 @@ Run COMMAND, then print system resource usage.\n\
 /* Print ARGV to FP, with each entry in ARGV separated by FILLER.  */
 
 static void
-fprintargv (FILE *fp, const char *const *argv, const char *filler)
+fprintargv (FILE *fp, const char *const *argv)
 {
-  const char *const *av;
-
-  av = argv;
-  fputs (*av, fp);
-  while (*++av)
+  for (const char *const *av = argv; *av; ++av)
     {
-      fputs (filler, fp);
-      fputs (*av, fp);
+      if (av != argv)
+        fputc (' ', fp);
+      fputs(*av, fp);
     }
   if (ferror (fp))
     error (EXIT_FAILURE, errno, "write error");
@@ -414,7 +411,7 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
               break;
 
             case 'C':		/* The command that got timed.  */
-              fprintargv (fp, command, " ");
+              fprintargv (fp, command);
               break;
 
             case 'D': /* Average unshared data size.  */
@@ -660,11 +657,10 @@ summarize (FILE *fp, const char *fmt, const char **command, RESUSE *resp)
 static const char **
 getargs (int argc, char **argv)
 {
-  int optc;
-
-  while ((optc = getopt_long (argc, argv, "+af:o:pqvV", longopts, NULL)) != -1)
+  for (int c;
+       (c = getopt_long (argc, argv, "+af:o:pqvV", longopts, NULL)) != -1;)
     {
-      switch (optc)
+      switch (c)
 	{
 	case 'a':
 	  append = true;
@@ -731,26 +727,23 @@ getargs (int argc, char **argv)
 static void
 run_command (const char **cmd, RESUSE *resp)
 {
-  pid_t pid;			/* Pid of child.  */
-  sighandler_t interrupt_signal, quit_signal;
-  int saved_errno;
-
   resp->start_time = current_timespec ();
 
-  pid = fork ();		/* Run CMD as child process.  */
+  /* Run CMD as child process.  */
+  pid_t pid = fork ();
   if (pid < 0)
     error (EXIT_CANCELED, errno, "cannot fork");
   else if (pid == 0)
     {
       execvp (cmd[0], (char * const *) cmd);
-      saved_errno = errno;
+      int saved_errno = errno;
       error (0, errno, "cannot run %s", cmd[0]);
       _exit (saved_errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
     }
 
   /* Have signals kill the child but not self (if possible).  */
-  interrupt_signal = signal (SIGINT, SIG_IGN);
-  quit_signal = signal (SIGQUIT, SIG_IGN);
+  sighandler_t interrupt_signal = signal (SIGINT, SIG_IGN);
+  sighandler_t quit_signal = signal (SIGQUIT, SIG_IGN);
 
   if (waitpid (pid, &resp->waitstatus, 0) < 0)
     error (EXIT_FAILURE, errno, "error waiting for child process");
